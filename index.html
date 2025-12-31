@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sketch My Year</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="flex flex-col items-center justify-center p-4 md:p-12 overflow-hidden">
+
+    <div id="exportModal">
+        <div id="exportModalContent" class="p-4 rounded-2xl max-w-[280px] w-full space-y-3 sketch-font border">
+            <h2 id="modalTitle" class="text-xl font-bold text-center">Export Sketch</h2>
+            <p id="modalDesc" class="text-center text-xs opacity-80">Choose your preferred resolution:</p>
+            <div id="modalButtons" class="flex flex-col gap-2">
+                <button id="btn169" onclick="exportGraph(1920, 1080, '16-9')" class="w-full py-2.5 border font-bold rounded-full hover:scale-105 transition-all text-sm">16:9 (High-Res)</button>
+                <button id="btn43" onclick="exportGraph(1440, 1080, '4-3')" class="w-full py-2.5 border font-bold rounded-full hover:scale-105 transition-all text-sm">4 : 3 (Classic)</button>
+                <button id="btn11" onclick="exportGraph(1080, 1080, '1-1')" class="w-full py-2.5 border font-bold rounded-full hover:scale-105 transition-all text-sm">1 : 1 (Square)</button>
+            </div>
+            <button id="modalCancel" onclick="closeModal()" class="w-full text-xs underline pt-1 opacity-60 hover:opacity-100 transition-opacity">Cancel</button>
+        </div>
+    </div>
+
+    <div class="w-full max-w-5xl flex flex-col items-center space-y-3 md:space-y-6 max-h-full">
+        <div class="theme-selector-container shrink-0">
+            <div id="themeLabel" class="theme-label sketch-font text-[10px] md:text-xs opacity-50 uppercase tracking-widest">
+                <span>Theme</span>
+            </div>
+            <div class="flex flex-wrap justify-center gap-4 md:gap-8">
+                <button onclick="setTheme('dark')" class="preset-btn theme-tag" id="btn-dark">Noir</button>
+                <button onclick="setTheme('blueprint')" class="preset-btn theme-tag" id="btn-blueprint">Blueprint</button>
+                <button onclick="setTheme('sketch')" class="preset-btn theme-tag" id="btn-sketch">Pencil</button>
+                <button onclick="setTheme('light')" class="preset-btn theme-tag" id="btn-light">Classic</button>
+            </div>
+        </div>
+
+        <div class="w-full flex flex-col items-center space-y-2 md:space-y-3">
+            <div class="canvas-container p-1 md:p-6 border border-white/5 relative w-full" id="container">
+                <div class="absolute top-2 right-2 md:top-4 md:right-4 flex gap-1 md:gap-2 z-30">
+                    <button id="resetBtn" class="action-icon-btn">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4.5 11c0-4 3.2-6.5 7.5-6.5c4 0 7.5 3 7.5 7s-3.5 7-7.5 7c-2.5 0-4.5-1-5.5-2.5" />
+                            <path d="M7 11.5L4.5 11L4 8.5" />
+                        </svg>
+                    </button>
+                    <button id="openSaveBtn" class="action-icon-btn">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 4v11m-3.5-3.5l3.5 3.5l3.5-3.5" />
+                            <path d="M5 16.5c1 1.5 2.5 2.5 7 2.5s6-1 7-2.5" />
+                        </svg>
+                    </button>
+                </div>
+
+                <canvas id="graphCanvas" class="w-full h-auto cursor-ns-resize"></canvas>
+                
+                <a id="watermarkLink" href="https://github.com/meneon114" target="_blank" 
+                   class="absolute bottom-2 right-3 md:bottom-4 md:right-6 sketch-font text-[8px] md:text-xs text-gray-500 hover:text-white transition-colors cursor-pointer z-20">
+                    github.com/meneon114
+                </a>
+            </div>
+
+            <p id="helperText" class="font-light sketch-font text-center text-[9px] md:text-xs text-balance opacity-60 transition-colors duration-500 shrink-0">
+                Drag any column to adjust your journey
+            </p>
+        </div>
+
+        <div class="w-full flex justify-end shrink-0">
+            <div class="text-right hidden md:block">
+                <p id="engineVersion" class="text-gray-500 text-[9px] uppercase tracking-[0.3em] font-bold">Sketch My Year v1.0</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

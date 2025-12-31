@@ -1,0 +1,79 @@
+@import url('https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Inter:wght@400;800&display=swap');
+
+:root {
+    --bg-color: #f4f1ea; /* Default Pencil BG */
+    --grid-color: rgba(0, 0, 0, 0.05);
+    --accent-color: #2d2d2d;
+    --text-font: 'Architects Daughter', cursive;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: #2d2d2d;
+    overflow: hidden; 
+    touch-action: none;
+    height: 100vh;
+    height: 100svh;
+}
+
+.sketch-font { font-family: 'Architects Daughter', cursive; }
+
+.canvas-container {
+    position: relative;
+    background: var(--bg-color);
+    border-radius: 12px;
+    box-shadow: 10px 10px 15px -13px rgba(0, 0, 0, 0.3);
+    margin-left: auto;
+    margin-right: auto;
+    transition: width 0.3s ease; 
+}
+
+.preset-btn {
+    @apply px-2 py-1 text-[10px] md:text-[11px] uppercase tracking-widest transition-all border-none bg-transparent outline-none cursor-pointer;
+}
+
+.inactive-preset {
+    @apply opacity-40 hover:opacity-100;
+    font-weight: 400;
+    text-decoration: none;
+}
+
+.active-preset {
+    @apply opacity-100;
+    font-weight: 800;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+#exportModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.theme-selector-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.action-icon-btn {
+    @apply flex items-center justify-center p-1 rounded-lg transition-all hover:scale-110 active:scale-95 bg-transparent border-none;
+    width: 36px;
+    height: 36px;
+    outline: none;
+}
+
+@media (min-width: 768px) {
+    .action-icon-btn {
+        width: 44px;
+        height: 44px;
+    }
+}

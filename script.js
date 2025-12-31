@@ -113,23 +113,19 @@ function setTheme(type) {
     draw();
 }
 
-function sketchLine(targetCtx, x1, y1, x2, y2, color, lineWidth = 1, roughness = 1, scale = 1) {
+function sketchLine(targetCtx, x1, y1, x2, y2, color, lineWidth = 1, roughness = 1) {
     targetCtx.beginPath();
     targetCtx.strokeStyle = color;
     targetCtx.lineWidth = lineWidth;
     const dx = x2 - x1, dy = y2 - y1;
     const distance = Math.sqrt(dx*dx + dy*dy);
-    
-    // Normalize segment length based on screen scale
-    const segments = Math.max(2, Math.floor(distance / (10 * scale)));
+    const segments = Math.max(2, Math.floor(distance / 10));
     const seed = (Math.abs(x1 * 12.3) + Math.abs(y1 * 45.6) + Math.abs(x2 * 78.9) + Math.abs(y2 * 32.1)) % 1000;
-    
     targetCtx.moveTo(x1, y1);
     for(let i = 1; i <= segments; i++) {
         const t = i / segments;
-        // Jitter amount is now proportional to scale
-        const rx = (Math.sin(seed + i * 1.5) + Math.cos(seed * 0.7 + i * 2.1)) * 0.5 * roughness * scale;
-        const ry = (Math.cos(seed + i * 1.3) + Math.sin(seed * 0.8 + i * 2.5)) * 0.5 * roughness * scale;
+        const rx = (Math.sin(seed + i * 1.5) + Math.cos(seed * 0.7 + i * 2.1)) * 0.5 * roughness;
+        const ry = (Math.cos(seed + i * 1.3) + Math.sin(seed * 0.8 + i * 2.5)) * 0.5 * roughness;
         targetCtx.lineTo(x1 + dx * t + rx, y1 + dy * t + ry);
     }
     targetCtx.stroke();
@@ -178,9 +174,8 @@ function render(targetCtx, w, h, isExport = false) {
     targetCtx.fillRect(0, 0, w, h);
 
     const axisWidth = Math.max(1.5, 3 * scale);
-    // Pass scale to maintain proportional randomness
-    sketchLine(targetCtx, padding.left, padding.top - 20, padding.left, h - padding.bottom, theme.text, axisWidth, 1, scale);
-    sketchLine(targetCtx, padding.left, h - padding.bottom, w - padding.right + 20, h - padding.bottom, theme.text, axisWidth, 1, scale);
+    sketchLine(targetCtx, padding.left, padding.top - 20, padding.left, h - padding.bottom, theme.text, axisWidth, 1);
+    sketchLine(targetCtx, padding.left, h - padding.bottom, w - padding.right + 20, h - padding.bottom, theme.text, axisWidth, 1);
 
     const headerY = Math.max(55, 65 * scale);
     targetCtx.fillStyle = theme.text;
@@ -206,7 +201,7 @@ function render(targetCtx, w, h, isExport = false) {
     levels.forEach((level, i) => {
         const y = padding.top + (i * (plotHeight / (levels.length - 1)));
         if (i !== levels.length -1) {
-           sketchLine(targetCtx, padding.left, y, w - padding.right, y, theme.grid, gridWidth, 0.5, scale);
+           sketchLine(targetCtx, padding.left, y, w - padding.right, y, theme.grid, gridWidth, 0.5);
         }
         targetCtx.fillStyle = theme.text;
         targetCtx.font = `${Math.max(9, 14 * scale)}px "Architects Daughter"`;
@@ -241,26 +236,51 @@ function render(targetCtx, w, h, isExport = false) {
     }));
 
     if (pts.length >= 2) {
+        // --- Monotone Cubic Spline Interpolation ---
+        const n = pts.length;
+        const dx = [], dy = [], ms = [];
+        for (let i = 0; i < n - 1; i++) {
+            dx[i] = pts[i+1].x - pts[i].x;
+            dy[i] = pts[i+1].y - pts[i].y;
+            ms[i] = dy[i] / dx[i];
+        }
+
+        const c1s = [ms[0]];
+        for (let i = 0; i < n - 2; i++) {
+            const m = ms[i], mNext = ms[i+1];
+            if (m * mNext <= 0) {
+                c1s.push(0);
+            } else {
+                const dx_ = dx[i], dxNext = dx[i+1], common = dx_ + dxNext;
+                c1s.push(3 * common / ((common + dxNext) / m + (common + dx_) / mNext));
+            }
+        }
+        c1s.push(ms[ms.length - 1]);
+
         let splinePoints = [];
-        for (let i = 0; i < pts.length - 1; i++) {
-            const p1 = pts[i];
-            const p2 = pts[i + 1];
-            const cpOffset = (p2.x - p1.x) / 2;
+        for (let i = 0; i < n - 1; i++) {
+            const p1 = pts[i], p2 = pts[i+1];
+            const c1 = c1s[i], c2 = c1s[i+1];
+            const dx_ = dx[i];
             const seedCurve = (i * 123);
-            for(let t = 0; t <= 1; t += 1/20) {
-                const invT = 1 - t;
-                const b0 = invT * invT * invT;
-                const b1 = 3 * invT * invT * t;
-                const b2 = 3 * invT * t * t;
-                const b3 = t * t * t;
-                const x = b0 * p1.x + b1 * (p1.x + cpOffset) + b2 * (p2.x - cpOffset) + b3 * p2.x;
-                const y = b0 * p1.y + b1 * p1.y + b2 * p2.y + b3 * p2.y;
-                // Scale spline roughness
-                const rx = (Math.sin(seedCurve + t * 10) * 0.5) * theme.roughness * scale;
-                const ry = (Math.cos(seedCurve + t * 10) * 0.5) * theme.roughness * scale;
+
+            for (let t = 0; t <= 1; t += 1/20) {
+                const t2 = t * t, t3 = t2 * t;
+                const h00 = 2*t3 - 3*t2 + 1;
+                const h10 = t3 - 2*t2 + t;
+                const h01 = -2*t3 + 3*t2;
+                const h11 = t3 - t2;
+                
+                const x = p1.x + t * dx_;
+                const y = h00 * p1.y + h10 * dx_ * c1 + h01 * p2.y + h11 * dx_ * c2;
+                
+                const rx = (Math.sin(seedCurve + t * 10) * 0.5) * theme.roughness;
+                const ry = (Math.cos(seedCurve + t * 10) * 0.5) * theme.roughness;
                 splinePoints.push({x: x + rx, y: y + ry});
             }
         }
+        // --- End Interpolation Logic ---
+
         targetCtx.save();
         targetCtx.beginPath();
         targetCtx.moveTo(pts[0].x, pts[0].y);

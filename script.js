@@ -113,19 +113,23 @@ function setTheme(type) {
     draw();
 }
 
-function sketchLine(targetCtx, x1, y1, x2, y2, color, lineWidth = 1, roughness = 1) {
+function sketchLine(targetCtx, x1, y1, x2, y2, color, lineWidth = 1, roughness = 1, scale = 1) {
     targetCtx.beginPath();
     targetCtx.strokeStyle = color;
     targetCtx.lineWidth = lineWidth;
     const dx = x2 - x1, dy = y2 - y1;
     const distance = Math.sqrt(dx*dx + dy*dy);
-    const segments = Math.max(2, Math.floor(distance / 10));
+    
+    // Normalize segment length based on screen scale
+    const segments = Math.max(2, Math.floor(distance / (10 * scale)));
     const seed = (Math.abs(x1 * 12.3) + Math.abs(y1 * 45.6) + Math.abs(x2 * 78.9) + Math.abs(y2 * 32.1)) % 1000;
+    
     targetCtx.moveTo(x1, y1);
     for(let i = 1; i <= segments; i++) {
         const t = i / segments;
-        const rx = (Math.sin(seed + i * 1.5) + Math.cos(seed * 0.7 + i * 2.1)) * 0.5 * roughness;
-        const ry = (Math.cos(seed + i * 1.3) + Math.sin(seed * 0.8 + i * 2.5)) * 0.5 * roughness;
+        // Jitter amount is now proportional to scale
+        const rx = (Math.sin(seed + i * 1.5) + Math.cos(seed * 0.7 + i * 2.1)) * 0.5 * roughness * scale;
+        const ry = (Math.cos(seed + i * 1.3) + Math.sin(seed * 0.8 + i * 2.5)) * 0.5 * roughness * scale;
         targetCtx.lineTo(x1 + dx * t + rx, y1 + dy * t + ry);
     }
     targetCtx.stroke();
@@ -174,8 +178,9 @@ function render(targetCtx, w, h, isExport = false) {
     targetCtx.fillRect(0, 0, w, h);
 
     const axisWidth = Math.max(1.5, 3 * scale);
-    sketchLine(targetCtx, padding.left, padding.top - 20, padding.left, h - padding.bottom, theme.text, axisWidth, 1);
-    sketchLine(targetCtx, padding.left, h - padding.bottom, w - padding.right + 20, h - padding.bottom, theme.text, axisWidth, 1);
+    // Pass scale to maintain proportional randomness
+    sketchLine(targetCtx, padding.left, padding.top - 20, padding.left, h - padding.bottom, theme.text, axisWidth, 1, scale);
+    sketchLine(targetCtx, padding.left, h - padding.bottom, w - padding.right + 20, h - padding.bottom, theme.text, axisWidth, 1, scale);
 
     const headerY = Math.max(55, 65 * scale);
     targetCtx.fillStyle = theme.text;
@@ -201,7 +206,7 @@ function render(targetCtx, w, h, isExport = false) {
     levels.forEach((level, i) => {
         const y = padding.top + (i * (plotHeight / (levels.length - 1)));
         if (i !== levels.length -1) {
-           sketchLine(targetCtx, padding.left, y, w - padding.right, y, theme.grid, gridWidth, 0.5);
+           sketchLine(targetCtx, padding.left, y, w - padding.right, y, theme.grid, gridWidth, 0.5, scale);
         }
         targetCtx.fillStyle = theme.text;
         targetCtx.font = `${Math.max(9, 14 * scale)}px "Architects Daughter"`;
@@ -250,8 +255,9 @@ function render(targetCtx, w, h, isExport = false) {
                 const b3 = t * t * t;
                 const x = b0 * p1.x + b1 * (p1.x + cpOffset) + b2 * (p2.x - cpOffset) + b3 * p2.x;
                 const y = b0 * p1.y + b1 * p1.y + b2 * p2.y + b3 * p2.y;
-                const rx = (Math.sin(seedCurve + t * 10) * 0.5) * theme.roughness;
-                const ry = (Math.cos(seedCurve + t * 10) * 0.5) * theme.roughness;
+                // Scale spline roughness
+                const rx = (Math.sin(seedCurve + t * 10) * 0.5) * theme.roughness * scale;
+                const ry = (Math.cos(seedCurve + t * 10) * 0.5) * theme.roughness * scale;
                 splinePoints.push({x: x + rx, y: y + ry});
             }
         }
